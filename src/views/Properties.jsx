@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Building2, Home, Plus, TrendingUp } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { formatMoney } from '@/utils/format';
@@ -9,6 +10,7 @@ import AddPropertyModal from '@/components/AddPropertyModal';
 export default function Properties() {
   const { properties, loading, reload } = useDashboardData();
   const [modalOpen, setModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (loading) return <div className="loading-state">Loading your properties...</div>;
 
@@ -18,7 +20,11 @@ export default function Properties() {
       {properties.length ? (
         <section className="property-detail-grid">
           {properties.map((property) => (
-            <div className="section-card property-detail-card" key={property.id}>
+            <div
+              className="section-card property-detail-card clickable"
+              key={property.id}
+              onClick={() => navigate(`/properties/${property.id}`)}
+            >
               <div className={`property-hero ${property.accent || 'mint'}`}><Home size={30} /></div>
               <div className="property-detail-body">
                 <div className="property-detail-head">

@@ -1,4 +1,4 @@
-import { Activity, Building2, CircleHelp, FileText, ChevronRight, LogOut, Settings, Sparkles, TrendingUp, WalletCards } from 'lucide-react';
+import { Activity, Building2, CircleHelp, FileText, LogOut, Settings, TrendingUp, WalletCards } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { displayName } from '@/utils/format';
 
@@ -6,6 +6,7 @@ const navigation = [
   { label: 'Overview', path: '/', icon: Activity },
   { label: 'My properties', path: '/properties', icon: Building2 },
   { label: 'Loan tracker', path: '/loans', icon: WalletCards },
+  { label: 'Refinance', path: '/refinance', icon: TrendingUp },
   { label: 'Document vault', path: '/documents', icon: FileText },
 ];
 
@@ -44,14 +45,6 @@ export default function Sidebar({ user, onLogout, mobileOpen, onNavigate }) {
         <span>Settings</span>
       </Link>
       <div className="sidebar-bottom">
-        <div className="advisor-card fake-refinance-card">
-          <div className="advisor-icon"><Sparkles size={16} /></div>
-          <div>
-            <strong>Refinance</strong>
-            <span>Coming soon</span>
-          </div>
-          <ChevronRight size={15} />
-        </div>
         <div className="profile-row">
           <div className="avatar">{initials}</div>
           <div className="profile-copy">

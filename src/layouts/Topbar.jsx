@@ -9,11 +9,15 @@ export default function Topbar({ user, onMenuClick }) {
     '/': 'Overview',
     '/properties': 'My properties',
     '/loans': 'Loan tracker',
+    '/refinance': 'Refinance',
     '/documents': 'Document vault',
     '/help': 'Help centre',
     '/settings': 'Settings',
   };
   const initials = displayName(user).slice(0, 2).toUpperCase();
+
+  let label = labels[location.pathname];
+  if (!label && location.pathname.startsWith('/properties/')) label = 'Property details';
 
   return (
     <header className="topbar">
@@ -23,7 +27,7 @@ export default function Topbar({ user, onMenuClick }) {
       <div className="breadcrumb">
         <span>Owner space</span>
         <ChevronRight size={14} />
-        <strong>{labels[location.pathname] || 'Overview'}</strong>
+        <strong>{label || 'Overview'}</strong>
       </div>
       <div className="topbar-actions">
         <button className="icon-button notification-button" aria-label="Notifications">

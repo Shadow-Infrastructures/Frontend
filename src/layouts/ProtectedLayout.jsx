@@ -5,7 +5,9 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Overview from '@/views/Overview';
 import Properties from '@/views/Properties';
+import PropertyDetail from '@/views/PropertyDetail';
 import Loans from '@/views/Loans';
+import Refinance from '@/views/Refinance';
 import Documents from '@/views/Documents';
 import Help from '@/views/Help';
 import SettingsView from '@/views/SettingsView';
@@ -32,7 +34,9 @@ export default function ProtectedLayout() {
           <Routes>
             <Route path="/" element={<Overview />} />
             <Route path="/properties" element={<Properties />} />
+            <Route path="/properties/:id" element={<PropertyDetail />} />
             <Route path="/loans" element={<Loans />} />
+            <Route path="/refinance" element={<Refinance />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/help" element={<Help />} />
             <Route path="/settings" element={<SettingsView />} />

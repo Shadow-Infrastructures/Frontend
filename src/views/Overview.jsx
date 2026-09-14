@@ -42,17 +42,17 @@ export default function Overview() {
             <button className="text-button" onClick={() => navigate('/properties')}><Plus size={16} /> Add property</button>
           </div>
           {properties.length ? (
-            <div className="property-list">{properties.map((property) => <PropertyRow key={property.id} property={property} onClick={() => navigate('/properties')} />)}</div>
+            <div className="property-list">{properties.map((property) => <PropertyRow key={property.id} property={property} onClick={() => navigate(`/properties/${property.id}`)} />)}</div>
           ) : (
             <div className="empty-state"><Building2 size={22} /><p>No properties connected yet.</p><button className="dark-button" onClick={() => navigate('/properties')}><Plus size={15} /> Add your first property</button></div>
           )}
           {properties.length > 0 && <button className="view-all" onClick={() => navigate('/properties')}>View all properties <ArrowUpRight size={15} /></button>}
         </div>
-        <div className="section-card insight-card">
-          <div className="insight-top"><div className="insight-icon"><Sparkles size={18} /></div><span>COMING SOON</span></div>
-          <h2>Refinance insights are<br /><em>on the way</em>.</h2>
-          <p>We are preparing tailored refinancing guidance for your connected properties.</p>
-          <div className="insight-footer"><TrendingUp size={15} /> No refinance applications are available yet</div>
+        <div className="section-card insight-card refinance-insight-link" onClick={() => navigate('/refinance')}>
+          <div className="insight-top"><div className="insight-icon"><Sparkles size={18} /></div><span>REFINANCE</span></div>
+          <h2>Check your<br /><em>refinance options</em>.</h2>
+          <p>Compare rates from partner banks and see how much you could save on monthly repayments.</p>
+          <div className="insight-footer"><TrendingUp size={15} /> View refinance offers <ArrowUpRight size={14} /></div>
         </div>
       </section>
       <section className="bottom-grid">

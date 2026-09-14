@@ -1,8 +1,12 @@
 /** Property portfolio API functions. */
-import { apiCreate, apiDelete, apiGetList } from './client';
+import { apiCreate, apiDelete, apiGetList, apiRequest } from './client';
 
 export function listProperties() {
   return apiGetList('/properties');
+}
+
+export function getProperty(propertyId) {
+  return apiRequest(`/properties/${propertyId}`);
 }
 
 export function createProperty(payload) {
