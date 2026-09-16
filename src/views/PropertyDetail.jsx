@@ -6,7 +6,6 @@ import {
   BedDouble,
   Building2,
   Calendar,
-  ChevronRight,
   Home,
   MapPin,
   TrendingUp,
@@ -18,6 +17,7 @@ import { getProperty } from '@/api/properties';
 import { formatMoney } from '@/utils/format';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
+import ValuationChart from '@/components/ValuationChart';
 
 const TENURE_LABELS = {
   '99_YEAR_LEASEHOLD': '99-Year Leasehold',
@@ -39,18 +39,12 @@ function formatDate(iso) {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  hour: '2-digit',
+    hour: '2-digit',
     minute: '2-digit',
-  hour12: true,
-  timeZone: 'Asia/Singapore',
-  timeZoneName: 'short',
+    hour12: true,
+    timeZone: 'Asia/Singapore',
+    timeZoneName: 'short',
   }).format(new Date(iso));
-}
-
-function formatShortDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  return new Intl.DateTimeFormat('en-SG', { month: 'short', year: 'numeric' }).format(d);
 }
 
 function formatNumber(value, decimals = 0) {
@@ -58,36 +52,6 @@ function formatNumber(value, decimals = 0) {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(Number(value || 0));
-}
-
-function buildTrendPath(data, width, height) {
-  if (!data || data.length < 2) return '';
-  const values = data.map((d) => d.valuation_sgd);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const stepX = width / (data.length - 1);
-
-  const points = data.map((d, i) => {
-    const x = i * stepX;
-    const y = height - ((d.valuation_sgd - min) / range) * (height - 8) - 4;
-    return { x, y };
-  });
-
-  let path = `M ${points[0].x},${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cx = (prev.x + curr.x) / 2;
-    path += ` C ${cx},${prev.y} ${cx},${curr.y} ${curr.x},${curr.y}`;
-  }
-  return path;
-}
-
-function buildAreaPath(data, width, height) {
-  if (!data || data.length < 2) return '';
-  const line = buildTrendPath(data, width, height);
-  return `${line} L ${width},${height} L 0,${height} Z`;
 }
 
 export default function PropertyDetail() {
@@ -126,16 +90,20 @@ export default function PropertyDetail() {
   );
   if (!property) return null;
 
-  const liveTracking = property.live_tracking || {};
-  const valuation = liveTracking.valuation_analytics || {};
-  const trend = valuation.valuation_trend || [];
+  const liveTracking = property.live_tracking;
+  console.log(liveTracking)
+  const valuation = liveTracking;
+  console.log(valuation)
+  const trend = valuation.valuation_trend;
+  console.log(trend)
   const trendData = trend.map((t) => ({ ...t, valuation_sgd: t.valuation_sgd || t.valuation || 0 }));
-  const currentValuation = property.current_estimated_valuation || property.current_estimated_valuation_sgd || 0;
-  const purchasePrice = property.purchase_price || property.purchase_price_sgd || 0;
-  const gain = valuation.unrealized_capital_gain_sgd || (currentValuation - purchasePrice);
-  const appreciation = valuation.appreciation_percentage || (purchasePrice > 0 ? ((currentValuation - purchasePrice) / purchasePrice) * 100 : 0);
-  const psf = valuation.psf_sgd || (property.floor_area_sqft ? currentValuation / property.floor_area_sqft : 0);
-  const lastUpdated = valuation.last_updated_at || property.created_at;
+  console.log(trendData)
+  const currentValuation = property.current_estimated_valuation;
+  const purchasePrice = property.purchase_price;
+  const gain = parseFloat(valuation.unrealized_capital_gain);
+  const appreciation = parseFloat(valuation.appreciation_percentage);
+  const psf = valuation.psf;
+  const lastUpdated = property.created_at;
 
   const accent = property.accent || 'mint';
   const tenureLabel = TENURE_LABELS[property.tenure] || String(property.tenure || '—').replaceAll('_', ' ');
@@ -186,45 +154,12 @@ export default function PropertyDetail() {
           </div>
           <span className="live-badge"><span className="live-pulse" /> Live</span>
         </div>
-        {trendData.length > 1 ? (
-          <div className="valuation-chart-wrap">
-            <div className="valuation-chart-summary">
-              <strong>{formatMoney(currentValuation)}</strong>
-              <span className={gain >= 0 ? 'trend-up' : 'trend-down-text'}>
-                <TrendingUp size={13} /> {gain >= 0 ? '+' : ''}{appreciation.toFixed(1)}% since purchase
-              </span>
-            </div>
-            <div className="valuation-chart">
-              <svg viewBox="0 0 600 180" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00bfa5" stopOpacity="0.22" />
-                    <stop offset="100%" stopColor="#00bfa5" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d={buildAreaPath(trendData, 600, 180)} fill="url(#areaGrad)" />
-                <path d={buildTrendPath(trendData, 600, 180)} fill="none" stroke="#00bfa5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                {trendData.map((d, i) => {
-                  const values = trendData.map((t) => t.valuation_sgd);
-                  const min = Math.min(...values);
-                  const max = Math.max(...values);
-                  const range = max - min || 1;
-                  const stepX = 600 / (trendData.length - 1);
-                  const x = i * stepX;
-                  const y = 180 - ((d.valuation_sgd - min) / range) * (180 - 8) - 4;
-                  return <circle key={i} cx={x} cy={y} r="3.5" fill="#00bfa5" className="trend-dot" />;
-                })}
-              </svg>
-              <div className="chart-x-labels valuation-x-labels">
-                {trendData.map((d, i) => (
-                  <span key={i}>{formatShortDate(d.date)}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="empty-state"><TrendingUp size={22} /><p>Valuation trend data will appear here once available.</p></div>
-        )}
+        <ValuationChart
+          data={trendData}
+          currentValue={currentValuation}
+          changeLabel={`${gain >= 0 ? '+' : ''}${appreciation.toFixed(1)}% since purchase`}
+          changePositive={gain >= 0}
+        />
       </section>
 
       {/* Property details grid */}

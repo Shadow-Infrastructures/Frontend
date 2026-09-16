@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Building2, Home, Landmark, Plus, Sparkles, TrendingUp, WalletCards } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -6,17 +7,52 @@ import { displayName, formatMoney } from '@/utils/format';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
 import PropertyRow from '@/components/PropertyRow';
+import ValuationChart from '@/components/ValuationChart';
 
 /** Dashboard overview populated entirely from backend collections. */
 export default function Overview() {
   const { user } = useAuth();
-  const { properties, loans, loading, error } = useDashboardData();
+  const { properties, loans, propertyDetails, loading, error } = useDashboardData();
   const navigate = useNavigate();
   const totalValue = properties.reduce((sum, item) => sum + Number(item.value || 0), 0);
   const outstanding = loans.reduce((sum, item) => sum + Number(item.balance || 0), 0);
   const monthly = loans.reduce((sum, item) => sum + Number(item.monthly || 0), 0);
   const nextDue = loans[0]?.nextDue || 'No payment data';
   const dateLabel = new Intl.DateTimeFormat('en-SG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+
+  const portfolioChart = useMemo(() => {
+    const allTrends = propertyDetails
+      .map((p) => p?.live_tracking?.valuation_analytics?.valuation_trend || [])
+      .filter((t) => t && t.length > 0);
+
+    if (allTrends.length === 0) return { data: [], totalValue: 0, changeLabel: '', changePositive: true };
+
+    const dateMap = new Map();
+    allTrends.forEach((trend) => {
+      trend.forEach((point) => {
+        const date = point.date;
+        const val = Number(point.valuation_sgd || point.valuation || 0);
+        dateMap.set(date, (dateMap.get(date) || 0) + val);
+      });
+    });
+
+    const sortedDates = [...dateMap.keys()].sort();
+    const aggregated = sortedDates.map((date) => ({
+      date,
+      valuation_sgd: dateMap.get(date),
+    }));
+
+    const latest = aggregated[aggregated.length - 1]?.valuation_sgd || 0;
+    const first = aggregated[0]?.valuation_sgd || 0;
+    const changePct = first > 0 ? ((latest - first) / first) * 100 : 0;
+
+    return {
+      data: aggregated,
+      totalValue: latest,
+      changeLabel: `${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}% over period`,
+      changePositive: changePct >= 0,
+    };
+  }, [propertyDetails]);
 
   if (loading) return <div className="loading-state">Loading your portfolio...</div>;
 
@@ -57,7 +93,20 @@ export default function Overview() {
       </section>
       <section className="bottom-grid">
         <div className="section-card chart-card">
-          <PageHeader eyebrow="PORTFOLIO SNAPSHOT" title="Your current position" subtitle="Live totals from your connected properties and loans." />
+          <div className="card-header">
+            <div>
+              <p className="eyebrow">PORTFOLIO PERFORMANCE</p>
+              <h2>Portfolio value over time</h2>
+            </div>
+            <span className="live-badge"><span className="live-pulse" /> Live</span>
+          </div>
+          <ValuationChart
+            data={portfolioChart.data}
+            currentValue={portfolioChart.totalValue || totalValue}
+            changeLabel={portfolioChart.changeLabel || 'No trend data yet'}
+            changePositive={portfolioChart.changePositive}
+            emptyMessage="Add properties to see your portfolio performance chart."
+          />
           <div className="portfolio-snapshot">
             <div><Home size={18} /><span>Properties</span><strong>{properties.length}</strong></div>
             <div><Landmark size={18} /><span>Loans</span><strong>{loans.length}</strong></div>
